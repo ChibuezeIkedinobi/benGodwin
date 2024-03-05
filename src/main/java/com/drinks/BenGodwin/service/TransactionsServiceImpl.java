@@ -43,6 +43,7 @@ public class TransactionsServiceImpl implements TransactionsService {
         }
     }
 
+
     @Override
     public List<Transaction> getTransactionsForCustomer(Customers customer) {
         try {
