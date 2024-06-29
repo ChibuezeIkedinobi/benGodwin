@@ -1,14 +1,16 @@
 package com.drinks.BenGodwin.entity;
 
 import jakarta.persistence.*;
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import org.hibernate.annotations.*;
 
 import java.math.BigDecimal;
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.Date;
+import java.util.List;
 
 
 @AllArgsConstructor
@@ -16,7 +18,7 @@ import java.util.Date;
 @Getter
 @Setter
 @Entity
-@SQLDelete(sql = "UPDATE transactions SET deleted_at = NOW() WHERE id = ?")
+@SQLDelete(sql = "UPDATE transaction SET deleted_at = NOW() WHERE id = ?")
 @Where(clause = "deleted_at IS NULL")
 @Table(name = "transaction")
 public class Transaction {
@@ -28,31 +30,38 @@ public class Transaction {
 
     @ManyToOne
     @JoinColumn(name = "drink_id")
-    private Drinks drinks;
+    private Brand brand;
 
     @ManyToOne
     @JoinColumn(name = "customer_id")
-    private Customers customers;
+    private Customer customer;
 
-    @Column(name = "quantity_sold")
-    private int quantitySold;
+    @ManyToOne
+    @JoinColumn(name = "cashier_id")
+    private User cashier;
 
-    @NotNull(message = "Missing required field Gain")
-    @Column(name = "gain", nullable = false)
-    private BigDecimal gain;
+    @NotNull(message = "Missing required field Total Amount")
+    @Column(name = "total_amount", nullable = false)
+    private BigDecimal totalAmount;
 
-    @NotNull(message = "Missing required field Purchase Price At Transaction")
-    @Column(name = "purchase_price_at_transaction", nullable = false)
-    private BigDecimal purchasePriceAtTransaction;
+    @NotNull(message = "Missing required field Amount Paid")
+    @Column(name = "amount_paid", nullable = false)
+    private BigDecimal amountPaid;
 
-    @NotNull(message = "Missing required field date")
-    @Column(name = "date", nullable = false)
-    private LocalDate date;
+    @NotNull(message = "Missing required field Balance")
+    @Column(name = "balance", nullable = false)
+    private BigDecimal balance;
 
-    @CreationTimestamp
-    @Setter(AccessLevel.NONE)
+    @NotNull(message = "Missing required field Discount")
+    @Column(name = "discount", nullable = false)
+    private BigDecimal discount; // New field for discount
+
+    @NotNull(message = "Missing required field createdAt")
     @Column(name = "created_at", nullable = false)
-    private Date createdAt;
+    private LocalDateTime createdAt;
+
+    @OneToMany(mappedBy = "transaction", cascade = CascadeType.ALL)
+    private List<TransactionItem> items;
 
     @UpdateTimestamp
     @Column(name = "updated_at")

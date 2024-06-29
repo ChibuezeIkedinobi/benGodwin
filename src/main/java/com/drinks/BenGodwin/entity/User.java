@@ -8,38 +8,35 @@ import org.hibernate.annotations.SQLDelete;
 import org.hibernate.annotations.UpdateTimestamp;
 import org.hibernate.annotations.Where;
 
-import java.math.BigDecimal;
 import java.util.Date;
+
 
 @AllArgsConstructor
 @NoArgsConstructor
 @Getter
 @Setter
 @Entity
-@SQLDelete(sql = "UPDATE drinks SET deleted_at = NOW() WHERE id = ?")
+@SQLDelete(sql = "UPDATE user SET deleted_at = NOW() WHERE id = ?")
 @Where(clause = "deleted_at IS NULL")
-@Table(name = "drinks")
-public class Drinks {
+@Table(name = "user")
+public class User {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id", updatable = false, nullable = false)
     private Long id;
 
-    @NotNull(message = "Missing required field Brand")
-    @Column(name = "brand", nullable = false)
-    private String brand;
+    @NotNull(message = "Missing required field username")
+    @Column(name = "username", nullable = false)
+    private String username;
 
-    @NotNull(message = "Missing required field Total Purchase Price")
-    @Column(name = "total_purchase_price", nullable = false)
-    private BigDecimal totalPurchasePrice;
+    @NotNull(message = "Missing required field password")
+    @Column(name = "password", nullable = false)
+    private String password;
 
-    @NotNull(message = "Missing required field Selling Price")
-    @Column(name = "selling_price", nullable = false)
-    private BigDecimal sellingPrice;
-
-    @Column(name = "quantity_in_stock", nullable = false)
-    private int quantityInStock;
+    @NotNull(message = "Missing required field role")
+    @Column(name = "role", nullable = false)
+    private String role; // e.g., "ADMIN", "CASHIER"
 
     @CreationTimestamp
     @Setter(AccessLevel.NONE)

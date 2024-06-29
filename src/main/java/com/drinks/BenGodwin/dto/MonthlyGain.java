@@ -9,8 +9,10 @@ import java.math.BigDecimal;
 @AllArgsConstructor
 @Getter
 @Setter
-public class ProfitSalesResponse {
+public class MonthlyGain {
 
-    private BigDecimal totalProfit;
-    private int totalSales;
+    private int year;
+    private int month;
+    private BigDecimal totalGain;
+
 }
