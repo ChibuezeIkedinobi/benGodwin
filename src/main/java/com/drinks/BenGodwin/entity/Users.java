@@ -8,6 +8,7 @@ import org.hibernate.annotations.SQLDelete;
 import org.hibernate.annotations.UpdateTimestamp;
 import org.hibernate.annotations.Where;
 
+import java.sql.ConnectionBuilder;
 import java.util.Date;
 
 
@@ -15,11 +16,12 @@ import java.util.Date;
 @NoArgsConstructor
 @Getter
 @Setter
+@Builder
 @Entity
 @SQLDelete(sql = "UPDATE user SET deleted_at = NOW() WHERE id = ?")
 @Where(clause = "deleted_at IS NULL")
-@Table(name = "user")
-public class User {
+@Table(name = "users")
+public class Users {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -34,10 +36,6 @@ public class User {
     @Column(name = "password", nullable = false)
     private String password;
 
-    @NotNull(message = "Missing required field role")
-    @Column(name = "role", nullable = false)
-    private String role; // e.g., "ADMIN", "CASHIER"
-
     @CreationTimestamp
     @Setter(AccessLevel.NONE)
     @Column(name = "created_at", nullable = false)
@@ -51,4 +49,5 @@ public class User {
     @Setter(AccessLevel.NONE)
     @Column(name = "deleted_at")
     private Date deletedAt;
+
 }

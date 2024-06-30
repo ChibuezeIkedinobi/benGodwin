@@ -1,30 +1,42 @@
 package com.drinks.BenGodwin.service;
 
-import ch.qos.logback.core.boolex.Matcher;
-import com.drinks.BenGodwin.entity.User;
-import com.drinks.BenGodwin.repository.UserRepository;
+import com.drinks.BenGodwin.entity.Users;
+import com.drinks.BenGodwin.repository.RoleRepository;
+import com.drinks.BenGodwin.repository.UsersRepository;
 import lombok.AllArgsConstructor;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+
+import java.util.Optional;
 
 @AllArgsConstructor
 @Service
 public class UserService {
 
-    private UserRepository userRepository;
+    private UsersRepository usersRepository;
+    private PasswordEncoder passwordEncoder;
+    private RoleRepository roleRepository;
 
-    private BCryptPasswordEncoder passwordEncoder;
+    public Users registerNewUser(String username, String password) {
+        if (usersRepository.findByUsername(username).isPresent()) {
+            throw new IllegalStateException("Username already taken");
+        }
 
-    public User registerUser(User user) {
-        user.setPassword(passwordEncoder.encode(user.getPassword()));
-        return userRepository.save(user);
+        Users newUsers = Users.builder()
+                .username(username)
+                .password(passwordEncoder.encode(password))
+                .build();
+
+        return usersRepository.save(newUsers);
     }
 
-    public User findByUsername(String username) {
-        return userRepository.findByUsername(username);
-    }
 
-    public boolean checkPassword(User user, String rawPassword) {
-        return passwordEncoder.matches(rawPassword, user.getPassword());
+    public boolean validateLogin(String username, String password) {
+        Optional<Users> optionalUsers = usersRepository.findByUsername(username);
+        if (optionalUsers.isPresent()) {
+            Users users = optionalUsers.get();
+            return passwordEncoder.matches(password, users.getPassword());
+        }
+        return false;
     }
 }

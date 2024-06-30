@@ -9,7 +9,7 @@ import com.drinks.BenGodwin.exception.ResourceNotFoundException;
 import com.drinks.BenGodwin.repository.BatchRepository;
 import com.drinks.BenGodwin.repository.CustomerRepository;
 import com.drinks.BenGodwin.repository.TransactionRepository;
-import com.drinks.BenGodwin.repository.UserRepository;
+import com.drinks.BenGodwin.repository.UsersRepository;
 import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
 import lombok.RequiredArgsConstructor;
@@ -31,13 +31,13 @@ public class OrderService {
 
     private CustomerRepository customerRepository;
 
-    private UserRepository userRepository;
+    private UsersRepository usersRepository;
 
     @Transactional
     public Transaction processBulkOrder(BulkOrderDto bulkOrderDto) {
         Customer customer = customerRepository.findById(bulkOrderDto.getCustomerId())
                 .orElseThrow(() -> new ResourceNotFoundException("Customer not found"));
-        User cashier = userRepository.findById(bulkOrderDto.getCashierId())
+        Users cashier = usersRepository.findById(bulkOrderDto.getCashierId())
                 .orElseThrow(() -> new ResourceNotFoundException("Cashier not found"));
 
         BigDecimal totalAmount = BigDecimal.ZERO;

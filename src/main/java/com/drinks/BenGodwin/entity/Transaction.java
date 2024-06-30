@@ -38,7 +38,7 @@ public class Transaction {
 
     @ManyToOne
     @JoinColumn(name = "cashier_id")
-    private User cashier;
+    private Users cashier;
 
     @NotNull(message = "Missing required field Total Amount")
     @Column(name = "total_amount", nullable = false)
