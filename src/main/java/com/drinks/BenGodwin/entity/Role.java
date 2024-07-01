@@ -1,5 +1,6 @@
 package com.drinks.BenGodwin.entity;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
@@ -23,5 +24,9 @@ public class Role {
     @NotNull(message = "Missing required field Name")
     @Column(name = "name", nullable = false)
     private String name;
+
+    @ManyToMany(mappedBy = "roles")
+    @JsonBackReference
+    private Set<Users> users;
 
 }

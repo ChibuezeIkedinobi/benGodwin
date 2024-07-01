@@ -1,5 +1,6 @@
 package com.drinks.BenGodwin.entity;
 
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
@@ -10,6 +11,7 @@ import org.hibernate.annotations.Where;
 
 import java.sql.ConnectionBuilder;
 import java.util.Date;
+import java.util.Set;
 
 
 @AllArgsConstructor
@@ -35,6 +37,15 @@ public class Users {
     @NotNull(message = "Missing required field password")
     @Column(name = "password", nullable = false)
     private String password;
+
+    @ManyToMany(fetch = FetchType.EAGER)
+    @JoinTable(
+            name = "users_roles",
+            joinColumns = @JoinColumn(name = "user_id"),
+            inverseJoinColumns = @JoinColumn(name = "role_id")
+    )
+//    @JsonManagedReference
+    private Set<Role> roles;
 
     @CreationTimestamp
     @Setter(AccessLevel.NONE)

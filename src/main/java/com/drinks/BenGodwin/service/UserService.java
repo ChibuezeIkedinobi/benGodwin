@@ -1,12 +1,15 @@
 package com.drinks.BenGodwin.service;
 
+import com.drinks.BenGodwin.entity.Role;
 import com.drinks.BenGodwin.entity.Users;
 import com.drinks.BenGodwin.repository.RoleRepository;
 import com.drinks.BenGodwin.repository.UsersRepository;
+import jakarta.annotation.PostConstruct;
 import lombok.AllArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.util.Collections;
 import java.util.Optional;
 
 @AllArgsConstructor
@@ -17,26 +20,48 @@ public class UserService {
     private PasswordEncoder passwordEncoder;
     private RoleRepository roleRepository;
 
-    public Users registerNewUser(String username, String password) {
-        if (usersRepository.findByUsername(username).isPresent()) {
-            throw new IllegalStateException("Username already taken");
+    @PostConstruct
+    public void init() {
+        if (roleRepository.findByName("ADMIN") == null) {
+            Role adminRole = new Role();
+            adminRole.setName("ADMIN");
+            roleRepository.save(adminRole);
         }
 
-        Users newUsers = Users.builder()
-                .username(username)
-                .password(passwordEncoder.encode(password))
-                .build();
+        if (roleRepository.findByName("CASHIER") == null) {
+            Role cashierRole = new Role();
+            cashierRole.setName("CASHIER");
+            roleRepository.save(cashierRole);
+        }
 
-        return usersRepository.save(newUsers);
+        if (usersRepository.findByUsername("admin") == null) {
+            Users admin = new Users();
+            admin.setUsername("admin");
+            admin.setPassword(passwordEncoder.encode("admin"));
+            admin.setRoles(Collections.singleton(roleRepository.findByName("ADMIN")));
+            usersRepository.save(admin);
+        }
+    }
+
+        public void saveCashier(Users users) {
+            if (usersRepository.findByUsername(users.getUsername()) != null) {
+                throw new RuntimeException("Username already exists");
+            }
+            users.setPassword(passwordEncoder.encode(users.getPassword()));
+            users.setRoles(Collections.singleton(roleRepository.findByName("CASHIER")));
+            usersRepository.save(users);
+        }
+
+    public Optional<Users> getUserById(Long id) {
+        return usersRepository.findById(id);
     }
 
 
-    public boolean validateLogin(String username, String password) {
-        Optional<Users> optionalUsers = usersRepository.findByUsername(username);
-        if (optionalUsers.isPresent()) {
-            Users users = optionalUsers.get();
-            return passwordEncoder.matches(password, users.getPassword());
-        }
-        return false;
-    }
+//    public boolean validateLogin(String username, String password) {
+//        Users users = usersRepository.findByUsername(username);
+//        if (users != null) {
+//            return passwordEncoder.matches(password, users.getPassword());
+//        }
+//        return false;
+//    }
 }
