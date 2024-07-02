@@ -4,14 +4,9 @@ package com.drinks.BenGodwin.service;
 import com.drinks.BenGodwin.dto.BulkOrderDto;
 import com.drinks.BenGodwin.dto.TransactionItemDto;
 import com.drinks.BenGodwin.entity.*;
-import com.drinks.BenGodwin.exception.InsufficientStockException;
 import com.drinks.BenGodwin.exception.ResourceNotFoundException;
-import com.drinks.BenGodwin.repository.BatchRepository;
-import com.drinks.BenGodwin.repository.CustomerRepository;
-import com.drinks.BenGodwin.repository.TransactionRepository;
-import com.drinks.BenGodwin.repository.UsersRepository;
+import com.drinks.BenGodwin.repository.*;
 import jakarta.transaction.Transactional;
-import lombok.AllArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -20,69 +15,74 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
-@AllArgsConstructor
 @RequiredArgsConstructor
 @Service
+@Transactional
 public class OrderService {
 
-    private BatchRepository batchRepository;
+    private final BrandRepository brandRepository;
+    private final BatchRepository batchRepository;
+    private final TransactionRepository transactionRepository;
+    private final CustomerRepository customerRepository;
+    private final UsersRepository usersRepository;
 
-    private TransactionRepository transactionRepository;
 
-    private CustomerRepository customerRepository;
-
-    private UsersRepository usersRepository;
-
-    @Transactional
-    public Transaction processBulkOrder(BulkOrderDto bulkOrderDto) {
+    public Transaction processOrder(BulkOrderDto bulkOrderDto) {
         Customer customer = customerRepository.findById(bulkOrderDto.getCustomerId())
                 .orElseThrow(() -> new ResourceNotFoundException("Customer not found"));
         Users cashier = usersRepository.findById(bulkOrderDto.getCashierId())
                 .orElseThrow(() -> new ResourceNotFoundException("Cashier not found"));
 
-        BigDecimal totalAmount = BigDecimal.ZERO;
-        List<TransactionItem> transactionItems = new ArrayList<>();
-
-        for (TransactionItemDto itemDto : bulkOrderDto.getItems()) {
-            Batch batch = batchRepository.findById(itemDto.getBatchId())
-                    .orElseThrow(() -> new ResourceNotFoundException("Batch not found"));
-
-            if (batch.getRemainingQuantity() < itemDto.getQuantity()) {
-                throw new InsufficientStockException("Insufficient stock for batch ID: " + itemDto.getBatchId());
-            }
-
-            batch.setRemainingQuantity(batch.getRemainingQuantity() - itemDto.getQuantity());
-            batchRepository.save(batch);
-
-            BigDecimal itemTotal = batch.getBrand().getSellingPrice().multiply(new BigDecimal(itemDto.getQuantity()));
-            totalAmount = totalAmount.add(itemTotal);
-
-            TransactionItem transactionItem = new TransactionItem();
-            transactionItem.setBrand(batch.getBrand());
-            transactionItem.setBatch(batch);
-            transactionItem.setQuantity(itemDto.getQuantity());
-            transactionItem.setPrice(batch.getBrand().getSellingPrice());
-            transactionItems.add(transactionItem);
-        }
-
-        BigDecimal discount = bulkOrderDto.getDiscount() != null ? bulkOrderDto.getDiscount() : BigDecimal.ZERO;
-        BigDecimal discountedTotal = totalAmount.subtract(discount);
-
         Transaction transaction = new Transaction();
         transaction.setCustomer(customer);
         transaction.setCashier(cashier);
-        transaction.setTotalAmount(discountedTotal);
-        transaction.setAmountPaid(BigDecimal.ZERO); // To be updated when payment is made
-        transaction.setBalance(discountedTotal); // Initial balance equals the total amount after discount
-        transaction.setDiscount(discount); // Set discount
         transaction.setCreatedAt(LocalDateTime.now());
-        transaction.setItems(transactionItems);
+        transaction.setDiscount(bulkOrderDto.getDiscount());
 
-        for (TransactionItem item : transactionItems) {
-            item.setTransaction(transaction);
+        BigDecimal totalAmount = BigDecimal.ZERO;
+
+        List<TransactionItem> transactionItems = new ArrayList<>();
+        for (TransactionItemDto itemDto : bulkOrderDto.getItems()) {
+            Brand brand = brandRepository.findById(itemDto.getBrandId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Brand not found"));
+
+            // Find the batch associated with the brand
+            Batch batch = batchRepository.findFirstByBrandOrderByCreatedAtAsc(brand)
+                    .orElseThrow(() -> new ResourceNotFoundException("Batch not found"));
+
+            TransactionItem transactionItem = new TransactionItem();
+            transactionItem.setTransaction(transaction);
+            transactionItem.setBrand(brand);
+            transactionItem.setBatch(batch);
+            transactionItem.setQuantity(itemDto.getQuantity());
+            transactionItem.setUnitPrice(brand.getSellingPrice());
+            transactionItem.setTotalPrice(brand.getSellingPrice().multiply(BigDecimal.valueOf(itemDto.getQuantity())));
+
+            totalAmount = totalAmount.add(transactionItem.getTotalPrice());
+            transactionItems.add(transactionItem);
         }
 
-        return transactionRepository.save(transaction);
+        totalAmount = totalAmount.subtract(bulkOrderDto.getDiscount());
+        BigDecimal totalAmountPaid = bulkOrderDto.getAmountPaid();
+        BigDecimal newBalance = totalAmount.subtract(totalAmountPaid).add(customer.getBalance());
+
+        transaction.setTotalAmount(totalAmount);
+        transaction.setAmountPaid(totalAmountPaid);
+        transaction.setBalance(newBalance);
+        transaction.setPaid(newBalance.compareTo(BigDecimal.ZERO) <= 0);
+        transaction.setItems(transactionItems);
+
+        // Update customer's balance
+        customer.setBalance(newBalance);
+
+        transactionRepository.save(transaction);
+        customerRepository.save(customer);
+        return transaction;
     }
 
+    public BigDecimal getCustomerBalance(Long customerId) {
+        Customer customer = customerRepository.findById(customerId)
+                .orElseThrow(() -> new ResourceNotFoundException("Customer not found"));
+        return customer.getBalance();
+    }
 }

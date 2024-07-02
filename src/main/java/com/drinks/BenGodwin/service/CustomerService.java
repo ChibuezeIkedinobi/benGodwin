@@ -11,12 +11,11 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 
-@AllArgsConstructor
 @RequiredArgsConstructor
 @Service
 public class CustomerService {
 
-    private CustomerRepository customerRepository;
+    private final CustomerRepository customerRepository;
 
     public Customer registerCustomer(CustomerDto customerDto) {
         Customer customer = new Customer();

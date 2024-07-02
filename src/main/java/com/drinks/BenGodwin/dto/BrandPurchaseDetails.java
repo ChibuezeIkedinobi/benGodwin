@@ -9,11 +9,10 @@ import java.math.BigDecimal;
 @AllArgsConstructor
 @Getter
 @Setter
-public class TransactionItemDto {
+public class BrandPurchaseDetails {
 
-    private Long brandId;
     private int quantity;
-    private BigDecimal unitPrice;
+    private BigDecimal pricePerUnit;
     private BigDecimal totalPrice;
 
 }

@@ -16,7 +16,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class CustomerController {
 
-    private CustomerService customerService;
+    private final CustomerService customerService;
 
     @PostMapping("/register")
     public ResponseEntity<?> registerCustomer(@RequestBody CustomerDto customerDto) {

@@ -15,6 +15,7 @@ public class BulkOrderDto {
     private Long customerId;
     private Long cashierId;
     private List<TransactionItemDto> items;
-    private BigDecimal discount; // New field for discount
+    private BigDecimal discount; // Field for discount
+    private BigDecimal amountPaid; // Field for amount paid
 
 }

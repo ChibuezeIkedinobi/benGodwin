@@ -29,15 +29,11 @@ public class Transaction {
     private Long id;
 
     @ManyToOne
-    @JoinColumn(name = "drink_id")
-    private Brand brand;
-
-    @ManyToOne
-    @JoinColumn(name = "customer_id")
+    @JoinColumn(name = "customer_id", nullable = false)
     private Customer customer;
 
     @ManyToOne
-    @JoinColumn(name = "cashier_id")
+    @JoinColumn(name = "cashier_id", nullable = false)
     private Users cashier;
 
     @NotNull(message = "Missing required field Total Amount")
@@ -54,14 +50,18 @@ public class Transaction {
 
     @NotNull(message = "Missing required field Discount")
     @Column(name = "discount", nullable = false)
-    private BigDecimal discount; // New field for discount
+    private BigDecimal discount;
 
     @NotNull(message = "Missing required field createdAt")
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 
-    @OneToMany(mappedBy = "transaction", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "transaction", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<TransactionItem> items;
+
+    @NotNull(message = "Missing required field Paid")
+    @Column(name = "paid", nullable = false)
+    private boolean paid;
 
     @UpdateTimestamp
     @Column(name = "updated_at")
@@ -72,5 +72,18 @@ public class Transaction {
     @Column(name = "deleted_at")
     private Date deletedAt;
 
+    @PrePersist
+    public void prePersist() {
+        calculateBalanceAndPaidStatus();
+    }
 
+    @PreUpdate
+    public void preUpdate() {
+        calculateBalanceAndPaidStatus();
+    }
+
+    private void calculateBalanceAndPaidStatus() {
+        this.balance = this.totalAmount.subtract(this.amountPaid);
+        this.paid = this.balance.compareTo(BigDecimal.ZERO) <= 0;
+    }
 }

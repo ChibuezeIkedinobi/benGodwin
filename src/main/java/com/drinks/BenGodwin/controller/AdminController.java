@@ -18,7 +18,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class AdminController {
 
-    private AdminService adminService;
+    private final AdminService adminService;
 
     @PostMapping("/brands")
     public ResponseEntity<?> addBrand(@RequestBody BrandDto brandDto) {
@@ -74,15 +74,15 @@ public class AdminController {
         return ResponseEntity.ok(customers);
     }
 
-    @GetMapping("/customers/{customerId}/purchases")
-    public ResponseEntity<?> getCustomerPurchases(@PathVariable Long customerId) {
-        List<CustomerPurchaseDto> purchases = adminService.getCustomerPurchases(customerId);
-        return ResponseEntity.ok(purchases);
+    @GetMapping("/customers/{customerId}/monthly-purchases")
+    public ResponseEntity<?> getCustomerMonthlyPurchases(@PathVariable Long customerId) {
+        List<MonthlyCustomerPurchaseDto> monthlyPurchases = adminService.getCustomerMonthlyPurchases(customerId);
+        return ResponseEntity.ok(monthlyPurchases);
     }
 
     @GetMapping("/customers/{customerId}/monthly-gains")
     public ResponseEntity<?> getCustomerMonthlyGains(@PathVariable Long customerId) {
-        List<MonthlyCustomerGainDto> gains = adminService.getCustomerMonthlyGains(customerId);
+        CustomerMonthlySummaryDto gains = adminService.getCustomerMonthlyGains(customerId);
         return ResponseEntity.ok(gains);
     }
 

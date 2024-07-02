@@ -39,15 +39,7 @@ public class InventoryService {
 
     @NotNull
     static Batch getBatch(BatchDto batchDto, BrandRepository brandRepository, BatchRepository batchRepository) {
-        Batch batch = new Batch();
-        batch.setBrand(brandRepository.findById(batchDto.getBrandId())
-                .orElseThrow(() -> new ResourceNotFoundException("Brand not found")));
-        batch.setQuantity(batchDto.getQuantity());
-        batch.setRemainingQuantity(batchDto.getQuantity());
-        batch.setBatchPrice(batchDto.getBatchPrice());
-        batch.setCreatedAt(LocalDateTime.now());
-        batch.setCompleted(false);
-        return batchRepository.save(batch);
+        return getBatch(batchDto, brandRepository, batchRepository);
     }
 
     public List<Batch> getAllBatches() {
@@ -69,16 +61,7 @@ public class InventoryService {
 
     @NotNull
     static BigDecimal getBigDecimal(List<Sale> sales) {
-        BigDecimal totalGain = BigDecimal.ZERO;
-
-        for (Sale sale : sales) {
-            Batch batch = sale.getBatch();
-            BigDecimal costPrice = batch.getBatchPrice().divide(new BigDecimal(batch.getQuantity()), RoundingMode.HALF_UP);
-            BigDecimal gain = sale.getSellingPrice().subtract(costPrice).multiply(new BigDecimal(sale.getQuantitySold()));
-            totalGain = totalGain.add(gain);
-        }
-
-        return totalGain;
+        return getBigDecimal(sales);
     }
 
 }

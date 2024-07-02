@@ -2,66 +2,66 @@ package com.drinks.BenGodwin.service;
 
 import com.drinks.BenGodwin.entity.Role;
 import com.drinks.BenGodwin.entity.Users;
+import com.drinks.BenGodwin.exception.UserRegistrationException;
 import com.drinks.BenGodwin.repository.RoleRepository;
 import com.drinks.BenGodwin.repository.UsersRepository;
 import jakarta.annotation.PostConstruct;
 import lombok.AllArgsConstructor;
+import lombok.RequiredArgsConstructor;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.Collections;
 import java.util.Optional;
 
-@AllArgsConstructor
+@RequiredArgsConstructor
 @Service
 public class UserService {
 
-    private UsersRepository usersRepository;
-    private PasswordEncoder passwordEncoder;
-    private RoleRepository roleRepository;
+    private final UsersRepository usersRepository;
+    private final PasswordEncoder passwordEncoder;
+    private final RoleRepository roleRepository;
+    private final AuthenticationManager authenticationManager;
 
-    @PostConstruct
-    public void init() {
-        if (roleRepository.findByName("ADMIN") == null) {
-            Role adminRole = new Role();
-            adminRole.setName("ADMIN");
-            roleRepository.save(adminRole);
-        }
 
-        if (roleRepository.findByName("CASHIER") == null) {
-            Role cashierRole = new Role();
-            cashierRole.setName("CASHIER");
-            roleRepository.save(cashierRole);
-        }
-
-        if (usersRepository.findByUsername("admin") == null) {
-            Users admin = new Users();
-            admin.setUsername("admin");
-            admin.setPassword(passwordEncoder.encode("admin"));
-            admin.setRoles(Collections.singleton(roleRepository.findByName("ADMIN")));
-            usersRepository.save(admin);
+    public Users registerUser(Users user) {
+        try {
+            user.setPassword(passwordEncoder.encode(user.getPassword()));
+            Role cashierRole = roleRepository.findByName("CASHIER");
+            user.setRoles(Collections.singleton(cashierRole));
+            return usersRepository.save(user);
+        } catch (RuntimeException e) {
+            throw new UserRegistrationException("Error occurred during user registration", e);
         }
     }
 
-        public void saveCashier(Users users) {
-            if (usersRepository.findByUsername(users.getUsername()) != null) {
-                throw new RuntimeException("Username already exists");
-            }
-            users.setPassword(passwordEncoder.encode(users.getPassword()));
-            users.setRoles(Collections.singleton(roleRepository.findByName("CASHIER")));
-            usersRepository.save(users);
+    public String loginUser(String username, String password) {
+        UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(username, password);
+        SecurityContextHolder.getContext().setAuthentication(authenticationManager.authenticate(authenticationToken));
+        return "User logged in successfully";
+    }
+
+    public Users findByUsername(String username) {
+        return usersRepository.findByUsername(username)
+                .orElseThrow(() -> new UsernameNotFoundException("User not found: " + username));
+    }
+
+    public void saveCashier(Users users) {
+        if (usersRepository.findByUsername(users.getUsername()).isPresent()) {
+            throw new RuntimeException("Username already exists");
         }
+        users.setPassword(passwordEncoder.encode(users.getPassword()));
+        users.setRoles(Collections.singleton(roleRepository.findByName("CASHIER")));
+        usersRepository.save(users);
+    }
 
     public Optional<Users> getUserById(Long id) {
         return usersRepository.findById(id);
     }
 
 
-//    public boolean validateLogin(String username, String password) {
-//        Users users = usersRepository.findByUsername(username);
-//        if (users != null) {
-//            return passwordEncoder.matches(password, users.getPassword());
-//        }
-//        return false;
-//    }
 }

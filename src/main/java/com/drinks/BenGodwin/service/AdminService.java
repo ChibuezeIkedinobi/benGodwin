@@ -9,29 +9,32 @@ import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.format.TextStyle;
 import java.util.*;
 
 
-@AllArgsConstructor
+
 @RequiredArgsConstructor
 @Service
+@Transactional
 public class AdminService {
 
-    private BrandRepository brandRepository;
+    private final BrandRepository brandRepository;
 
-    private BatchRepository batchRepository;
+    private final BatchRepository batchRepository;
 
-    private SaleRepository saleRepository;
+    private final SaleRepository saleRepository;
 
-    private TransactionRepository transactionRepository;
+    private final TransactionRepository transactionRepository;
 
-    private CustomerRepository customerRepository;
+    private final CustomerRepository customerRepository;
 
-    private GainService gainService;
+    private final GainService gainService;
 
     public Brand addBrand(BrandDto brandDto) {
         Brand brand = new Brand();
@@ -49,6 +52,11 @@ public class AdminService {
     }
 
     public Batch addBatch(BatchDto batchDto) {
+        return getBatch(batchDto, brandRepository, batchRepository);
+    }
+
+    @NotNull
+    static Batch getBatch(BatchDto batchDto, BrandRepository brandRepository, BatchRepository batchRepository) {
         Batch batch = new Batch();
         batch.setBrand(brandRepository.findById(batchDto.getBrandId())
                 .orElseThrow(() -> new ResourceNotFoundException("Brand not found")));
@@ -99,43 +107,61 @@ public class AdminService {
         return batchRepository.findAll();
     }
 
-    public List<CustomerPurchaseDto> getCustomerPurchases(Long customerId) {
-        List<Transaction> transactions = getTransactionsByCustomerId(customerId);
-        List<CustomerPurchaseDto> purchases = new ArrayList<>();
+    public CustomerMonthlySummaryDto getCustomerMonthlyGains(Long customerId) {
+        List<Transaction> transactions = transactionRepository.findByCustomerId(customerId);
+        Map<String, MonthlyCustomerGainDto> monthlyGains = new HashMap<>();
+
+        BigDecimal totalSpent = BigDecimal.ZERO;
+        BigDecimal totalGain = BigDecimal.ZERO;
 
         for (Transaction transaction : transactions) {
+            String monthKey = transaction.getCreatedAt().getYear() + "-" + transaction.getCreatedAt().getMonth().getDisplayName(TextStyle.FULL, Locale.ENGLISH);
             BigDecimal transactionGain = gainService.calculateTransactionGain(transaction);
-            purchases.add(new CustomerPurchaseDto(transaction.getId(), transaction.getCreatedAt(), transaction.getTotalAmount(), transactionGain));
+            totalSpent = totalSpent.add(transaction.getTotalAmount());
+            totalGain = totalGain.add(transactionGain);
+
+            MonthlyCustomerGainDto monthlyDto = monthlyGains.getOrDefault(monthKey, new MonthlyCustomerGainDto(transaction.getCreatedAt().getYear(), transaction.getCreatedAt().getMonth().getDisplayName(TextStyle.FULL, Locale.ENGLISH), BigDecimal.ZERO, BigDecimal.ZERO));
+            monthlyDto.setTotalSpent(monthlyDto.getTotalSpent().add(transaction.getTotalAmount()));
+            monthlyDto.setTotalGain(monthlyDto.getTotalGain().add(transactionGain));
+            monthlyGains.put(monthKey, monthlyDto);
         }
 
-        return purchases;
+        List<MonthlyCustomerGainDto> monthlyCustomerGainDto = new ArrayList<>(monthlyGains.values());
+        return new CustomerMonthlySummaryDto(monthlyCustomerGainDto, totalSpent, totalGain);
     }
 
-    public List<MonthlyCustomerGainDto> getCustomerMonthlyGains(Long customerId) {
+
+    public List<MonthlyCustomerPurchaseDto> getCustomerMonthlyPurchases(Long customerId) {
         List<Transaction> transactions = getTransactionsByCustomerId(customerId);
-        Map<String, BigDecimal> monthlyGains = new HashMap<>();
+        Map<String, MonthlyCustomerPurchaseDto> monthlyPurchases = new HashMap<>();
+        BigDecimal grandTotalSpent = BigDecimal.ZERO;
 
         for (Transaction transaction : transactions) {
-            String monthKey = transaction.getCreatedAt().getYear() + "-" + transaction.getCreatedAt().getMonthValue();
-            BigDecimal transactionGain = gainService.calculateTransactionGain(transaction);
-            monthlyGains.put(monthKey, monthlyGains.getOrDefault(monthKey, BigDecimal.ZERO).add(transactionGain));
+            String monthKey = transaction.getCreatedAt().getYear() + "-" + transaction.getCreatedAt().getMonth().getDisplayName(TextStyle.FULL, Locale.ENGLISH);
+            MonthlyCustomerPurchaseDto monthlyDto = monthlyPurchases.getOrDefault(monthKey, new MonthlyCustomerPurchaseDto(transaction.getCreatedAt().getYear(), transaction.getCreatedAt().getMonth().getDisplayName(TextStyle.FULL, Locale.ENGLISH), new HashMap<>(), BigDecimal.ZERO));
+
+            for (TransactionItem item : transaction.getItems()) {
+                String brandName = item.getBrand().getName();
+                BrandPurchaseDetails details = monthlyDto.getBrandQuantities().getOrDefault(brandName, new BrandPurchaseDetails(0, item.getUnitPrice(), BigDecimal.ZERO));
+                details.setQuantity(details.getQuantity() + item.getQuantity());
+                details.setTotalPrice(details.getTotalPrice().add(item.getTotalPrice()));
+
+                monthlyDto.getBrandQuantities().put(brandName, details);
+            }
+
+            monthlyDto.setTotalSpent(monthlyDto.getTotalSpent().add(transaction.getTotalAmount()));
+            grandTotalSpent = grandTotalSpent.add(transaction.getTotalAmount());
+            monthlyPurchases.put(monthKey, monthlyDto);
         }
 
-        return getMonthlyCustomerGainDtos(monthlyGains);
-    }
-
-    @NotNull
-    static List<MonthlyCustomerGainDto> getMonthlyCustomerGainDtos(Map<String, BigDecimal> monthlyGains) {
-        return getMonthlyCustomerGainDtos(monthlyGains);
+        return new ArrayList<>(monthlyPurchases.values());
     }
 
     public List<Customer> getAllCustomers() {
         return customerRepository.findAll();
     }
 
-    // Method definition for fetching transactions by customer ID
     public List<Transaction> getTransactionsByCustomerId(Long customerId) {
         return transactionRepository.findByCustomerId(customerId);
     }
-
 }

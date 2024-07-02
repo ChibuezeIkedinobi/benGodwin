@@ -23,4 +23,9 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("An error occurred: " + ex.getMessage());
     }
 
+    @ExceptionHandler(UserRegistrationException.class)
+    public ResponseEntity<String> handleUserRegistrationException(UserRegistrationException ex) {
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(ex.getMessage());
+    }
+
 }

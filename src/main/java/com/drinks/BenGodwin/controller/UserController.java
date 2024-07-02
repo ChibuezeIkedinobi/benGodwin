@@ -8,7 +8,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
@@ -21,34 +20,24 @@ import java.util.Optional;
 public class UserController {
 
     private final UserService userService;
-    private final AuthenticationManager authenticationManager;
 
 
     @PostMapping("/register/cashier")
-    public String registerCashier(@RequestBody Users users) {
-        try {
-            userService.saveCashier(users);
-            return "Cashier registered successfully";
-        } catch (RuntimeException e) {
-            return e.getMessage();
-        }
+    public ResponseEntity<?> registerUser(@RequestBody Users user) {
+        Users registeredUser = userService.registerUser(user);
+        return ResponseEntity.ok(registeredUser);
     }
+
 
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody Users user) {
         try {
-            Authentication authentication = authenticationManager.authenticate(
-                    new UsernamePasswordAuthenticationToken(user.getUsername(), user.getPassword())
-            );
-            SecurityContextHolder.getContext().setAuthentication(authentication);
-            UserDetails userDetails = (UserDetails) authentication.getPrincipal();
-            return ResponseEntity.ok("User logged in: " + userDetails.getUsername());
+                String message = userService.loginUser(user.getUsername(), user.getPassword());
+            return ResponseEntity.ok(message);
         } catch (Exception e) {
             return ResponseEntity.status(401).body("Invalid credentials");
         }
-
-
-}
+    }
 
 
     @GetMapping("/{id}")
@@ -62,13 +51,5 @@ public class UserController {
             return ResponseEntity.status(404).body("User not found");
         }
     }
-
-//    @PostMapping("/login")
-//    public ResponseEntity<String> loginUser(@RequestBody Users users) {
-//        if (userService.validateLogin(users.getUsername(), users.getPassword())) {
-//            return ResponseEntity.ok("Login successful");
-//        }
-//        return ResponseEntity.status(401).body("Invalid credentials");
-//    }
 
 }

@@ -20,7 +20,7 @@ import java.util.Set;
 @Setter
 @Builder
 @Entity
-@SQLDelete(sql = "UPDATE user SET deleted_at = NOW() WHERE id = ?")
+@SQLDelete(sql = "UPDATE users SET deleted_at = NOW() WHERE id = ?")
 @Where(clause = "deleted_at IS NULL")
 @Table(name = "users")
 public class Users {
@@ -44,7 +44,6 @@ public class Users {
             joinColumns = @JoinColumn(name = "user_id"),
             inverseJoinColumns = @JoinColumn(name = "role_id")
     )
-//    @JsonManagedReference
     private Set<Role> roles;
 
     @CreationTimestamp

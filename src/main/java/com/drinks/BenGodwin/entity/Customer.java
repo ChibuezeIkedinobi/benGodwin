@@ -8,6 +8,7 @@ import org.hibernate.annotations.SQLDelete;
 import org.hibernate.annotations.UpdateTimestamp;
 import org.hibernate.annotations.Where;
 
+import java.math.BigDecimal;
 import java.util.Date;
 import java.util.List;
 
@@ -34,6 +35,10 @@ public class Customer {
     @NotNull(message = "Missing required field Contact Info")
     @Column(name = "contact_info", nullable = false)
     private String contactInfo;
+
+    @NotNull(message = "Missing required field Balance")
+    @Column(name = "balance", nullable = false)
+    private BigDecimal balance = BigDecimal.ZERO;
 
     @OneToMany(mappedBy = "customer")
     private List<Transaction> transactions;

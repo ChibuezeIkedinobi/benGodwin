@@ -25,26 +25,26 @@ public class TransactionItem {
     private Long id;
 
     @ManyToOne
-    @JoinColumn(name = "transaction_id")
+    @JoinColumn(name = "transaction_id", nullable = false)
     private Transaction transaction;
 
     @ManyToOne
-    @JoinColumn(name = "brand_id")
+    @JoinColumn(name = "brand_id", nullable = false)
     private Brand brand;
 
     @ManyToOne
-    @JoinColumn(name = "batch_id")
+    @JoinColumn(name = "batch_id", nullable = false)
     private Batch batch;
 
-    @NotNull(message = "Missing required field quantity")
+    @NotNull(message = "Missing required field Quantity")
     @Column(name = "quantity", nullable = false)
     private int quantity;
 
-    @NotNull(message = "Missing required field Price")
-    @Column(name = "price", nullable = false)
-    private BigDecimal price;
+    @NotNull(message = "Missing required field Unit Price")
+    @Column(name = "unit_price", nullable = false)
+    private BigDecimal unitPrice;
 
-    @Setter(AccessLevel.NONE)
-    @Column(name = "deleted_at")
-    private Date deletedAt;
+    @NotNull(message = "Missing required field Total Price")
+    @Column(name = "total_price", nullable = false)
+    private BigDecimal totalPrice;
 }

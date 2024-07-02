@@ -6,14 +6,14 @@ import lombok.Getter;
 import lombok.Setter;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 @AllArgsConstructor
 @Getter
 @Setter
-public class MonthlyCustomerGainDto {
+public class CustomerMonthlySummaryDto {
 
-    private int year;
-    private String month;
+    private List<MonthlyCustomerGainDto> monthlyData;
     private BigDecimal totalSpent;
     private BigDecimal totalGain;
 

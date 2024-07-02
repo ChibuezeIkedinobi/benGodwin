@@ -19,7 +19,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class InventoryController {
 
-    private InventoryService inventoryService;
+    private final InventoryService inventoryService;
 
     @GetMapping("/low-stock")
     public ResponseEntity<?> getLowStockBatches(@RequestParam int threshold) {
