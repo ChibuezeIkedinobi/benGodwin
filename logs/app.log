@@ -17419,3 +17419,6 @@ Caused by: java.sql.SQLSyntaxErrorException: Table 'ShopPOS.users_roles' doesn't
 2024-07-02 16:06:24 INFO  c.d.BenGodwin.service.UserService - Fetched user by ID 4: Optional[com.drinks.BenGodwin.entity.Users@19259ad]
 2024-07-02 16:06:24 INFO  c.d.B.r.DatabaseModificationAspect - Database modification detected, creating SQL dumps for each table.
 2024-07-02 16:06:24 INFO  c.d.B.controller.UserController - Fetched user by ID 4: com.drinks.BenGodwin.dto.UsersDTO@51d43ae
+2024-07-02 16:10:12 INFO  o.s.o.j.LocalContainerEntityManagerFactoryBean - Closing JPA EntityManagerFactory for persistence unit 'default'
+2024-07-02 16:10:12 INFO  com.zaxxer.hikari.HikariDataSource - HikariPool-1 - Shutdown initiated...
+2024-07-02 16:10:12 INFO  com.zaxxer.hikari.HikariDataSource - HikariPool-1 - Shutdown completed.
