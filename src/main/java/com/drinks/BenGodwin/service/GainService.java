@@ -1,36 +1,25 @@
 package com.drinks.BenGodwin.service;
 
 
-import com.drinks.BenGodwin.dto.CustomerPurchaseDto;
 import com.drinks.BenGodwin.entity.*;
-import com.drinks.BenGodwin.repository.SaleRepository;
-import com.drinks.BenGodwin.repository.TransactionRepository;
 import jakarta.validation.constraints.NotNull;
-import lombok.AllArgsConstructor;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
+@Slf4j
 @RequiredArgsConstructor
 @Service
 public class GainService {
 
-
-    private final SaleRepository saleRepository;
-
-    private final TransactionRepository transactionRepository;
-
-
-
     BigDecimal calculateTotalGain(List<Sale> sales) {
-        return getBigDecimal(sales);
+        BigDecimal totalGain = getBigDecimal(sales);
+        log.info("Total gain calculated: {}", totalGain); // Logging the outcome of calculating total gain
+        return totalGain;
     }
 
     @NotNull
@@ -58,6 +47,7 @@ public class GainService {
             BigDecimal gain = item.getUnitPrice().subtract(costPrice).multiply(new BigDecimal(item.getQuantity()));
             transactionGain = transactionGain.add(gain);
         }
+        log.info("Transaction gain calculated: {}", transactionGain); // Logging the outcome of calculating transaction gain
         return transactionGain;
     }
 }

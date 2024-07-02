@@ -14,3 +14,5 @@ spring:
     database: mysql           # telling JPA that we are using mysql
     database-platform: org.hibernate.dialect.MySQLDialect
 
+backup:
+  directory: /Users/bueze/Documents/BenGodwin/backup

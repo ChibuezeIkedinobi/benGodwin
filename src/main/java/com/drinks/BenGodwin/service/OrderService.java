@@ -8,6 +8,7 @@ import com.drinks.BenGodwin.exception.ResourceNotFoundException;
 import com.drinks.BenGodwin.repository.*;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -15,6 +16,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+@Slf4j
 @RequiredArgsConstructor
 @Service
 @Transactional
@@ -25,7 +27,6 @@ public class OrderService {
     private final TransactionRepository transactionRepository;
     private final CustomerRepository customerRepository;
     private final UsersRepository usersRepository;
-
 
     public Transaction processOrder(BulkOrderDto bulkOrderDto) {
         Customer customer = customerRepository.findById(bulkOrderDto.getCustomerId())
@@ -75,14 +76,16 @@ public class OrderService {
         // Update customer's balance
         customer.setBalance(newBalance);
 
-        transactionRepository.save(transaction);
+        Transaction savedTransaction = transactionRepository.save(transaction);
         customerRepository.save(customer);
-        return transaction;
+        log.info("Order processed: {}", savedTransaction); // Logging the outcome of processing an order
+        return savedTransaction;
     }
 
     public BigDecimal getCustomerBalance(Long customerId) {
         Customer customer = customerRepository.findById(customerId)
                 .orElseThrow(() -> new ResourceNotFoundException("Customer not found"));
+        log.info("Fetched customer balance for ID {}: {}", customerId, customer.getBalance()); // Logging the outcome of fetching customer balance
         return customer.getBalance();
     }
 }

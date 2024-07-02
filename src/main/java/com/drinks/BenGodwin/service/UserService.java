@@ -5,9 +5,8 @@ import com.drinks.BenGodwin.entity.Users;
 import com.drinks.BenGodwin.exception.UserRegistrationException;
 import com.drinks.BenGodwin.repository.RoleRepository;
 import com.drinks.BenGodwin.repository.UsersRepository;
-import jakarta.annotation.PostConstruct;
-import lombok.AllArgsConstructor;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -18,6 +17,7 @@ import org.springframework.stereotype.Service;
 import java.util.Collections;
 import java.util.Optional;
 
+@Slf4j
 @RequiredArgsConstructor
 @Service
 public class UserService {
@@ -27,41 +27,37 @@ public class UserService {
     private final RoleRepository roleRepository;
     private final AuthenticationManager authenticationManager;
 
-
     public Users registerUser(Users user) {
-        try {
+
+            if (usersRepository.findByUsername(user.getUsername()).isPresent()) {
+                log.warn("Username already exists: {}", user.getUsername()); // Logging the warning if username already exists
+                throw new RuntimeException("Username already exists");
+            }
             user.setPassword(passwordEncoder.encode(user.getPassword()));
             Role cashierRole = roleRepository.findByName("CASHIER");
             user.setRoles(Collections.singleton(cashierRole));
-            return usersRepository.save(user);
-        } catch (RuntimeException e) {
-            throw new UserRegistrationException("Error occurred during user registration", e);
-        }
+            Users savedUser = usersRepository.save(user);
+            log.info("User registered: {}", savedUser); // Logging the outcome of user registration
+            return savedUser;
     }
 
     public String loginUser(String username, String password) {
         UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(username, password);
         SecurityContextHolder.getContext().setAuthentication(authenticationManager.authenticate(authenticationToken));
+        log.info("User logged in: {}", username); // Logging the outcome of user login
         return "User logged in successfully";
     }
 
     public Users findByUsername(String username) {
-        return usersRepository.findByUsername(username)
+        Users user = usersRepository.findByUsername(username)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found: " + username));
-    }
-
-    public void saveCashier(Users users) {
-        if (usersRepository.findByUsername(users.getUsername()).isPresent()) {
-            throw new RuntimeException("Username already exists");
-        }
-        users.setPassword(passwordEncoder.encode(users.getPassword()));
-        users.setRoles(Collections.singleton(roleRepository.findByName("CASHIER")));
-        usersRepository.save(users);
+        log.info("User found by username: {}", username); // Logging the outcome of finding user by username
+        return user;
     }
 
     public Optional<Users> getUserById(Long id) {
-        return usersRepository.findById(id);
+        Optional<Users> user = usersRepository.findById(id);
+        log.info("Fetched user by ID {}: {}", id, user); // Logging the outcome of fetching user by ID
+        return user;
     }
-
-
 }

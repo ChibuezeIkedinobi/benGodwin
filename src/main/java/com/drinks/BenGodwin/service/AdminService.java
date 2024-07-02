@@ -6,8 +6,8 @@ import com.drinks.BenGodwin.entity.*;
 import com.drinks.BenGodwin.exception.ResourceNotFoundException;
 import com.drinks.BenGodwin.repository.*;
 import jakarta.validation.constraints.NotNull;
-import lombok.AllArgsConstructor;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -19,21 +19,17 @@ import java.util.*;
 
 
 
+@Slf4j
 @RequiredArgsConstructor
 @Service
 @Transactional
 public class AdminService {
 
     private final BrandRepository brandRepository;
-
     private final BatchRepository batchRepository;
-
     private final SaleRepository saleRepository;
-
     private final TransactionRepository transactionRepository;
-
     private final CustomerRepository customerRepository;
-
     private final GainService gainService;
 
     public Brand addBrand(BrandDto brandDto) {
@@ -41,18 +37,24 @@ public class AdminService {
         brand.setName(brandDto.getName());
         brand.setBuyingPrice(brandDto.getBuyingPrice());
         brand.setSellingPrice(brandDto.getSellingPrice());
-        return brandRepository.save(brand);
+        Brand savedBrand = brandRepository.save(brand);
+        log.info("Brand added: {}", savedBrand); // Logging the outcome of adding a brand
+        return savedBrand;
     }
 
     public Brand updateBrandPrice(Long id, BigDecimal newSellingPrice) {
         Brand brand = brandRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Brand not found"));
         brand.setSellingPrice(newSellingPrice);
-        return brandRepository.save(brand);
+        Brand updatedBrand = brandRepository.save(brand);
+        log.info("Updated brand price: {}", updatedBrand); // Logging the outcome of updating brand price
+        return updatedBrand;
     }
 
     public Batch addBatch(BatchDto batchDto) {
-        return getBatch(batchDto, brandRepository, batchRepository);
+        Batch batch = getBatch(batchDto, brandRepository, batchRepository);
+        log.info("Batch added: {}", batch); // Logging the outcome of adding a batch
+        return batch;
     }
 
     @NotNull
@@ -72,7 +74,9 @@ public class AdminService {
         Batch batch = batchRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Batch not found"));
         batch.setCompleted(true);
-        return batchRepository.save(batch);
+        Batch completedBatch = batchRepository.save(batch);
+        log.info("Batch completed: {}", completedBatch); // Logging the outcome of completing a batch
+        return completedBatch;
     }
 
     public List<MonthlyGain> getMonthlyGains() {
@@ -81,6 +85,7 @@ public class AdminService {
         List<Sale> sales = saleRepository.findByMonth(startOfMonth, endOfMonth); // Fetch sales using SaleRepository
         BigDecimal totalGain = gainService.calculateTotalGain(sales);
         MonthlyGain monthlyGain = new MonthlyGain(startOfMonth.getYear(), startOfMonth.getMonthValue(), totalGain);
+        log.info("Monthly gains calculated: {}", monthlyGain); // Logging the outcome of calculating monthly gains
         return Collections.singletonList(monthlyGain);
     }
 
@@ -89,7 +94,9 @@ public class AdminService {
                 .orElseThrow(() -> new ResourceNotFoundException("Batch not found"));
         List<Sale> sales = saleRepository.findByBatch(batch); // Fetch sales using SaleRepository
         BigDecimal totalGain = gainService.calculateTotalGain(sales);
-        return new BatchGain(batch, totalGain);
+        BatchGain batchGain = new BatchGain(batch, totalGain);
+        log.info("Batch gains calculated: {}", batchGain); // Logging the outcome of calculating batch gains
+        return batchGain;
     }
 
     public List<MonthlyGain> getBrandMonthlyGains(Long brandId) {
@@ -100,11 +107,14 @@ public class AdminService {
         List<Sale> sales = saleRepository.findByBrandAndMonth(brand, startOfMonth, endOfMonth); // Fetch sales using SaleRepository
         BigDecimal totalGain = gainService.calculateTotalGain(sales);
         MonthlyGain monthlyGain = new MonthlyGain(startOfMonth.getYear(), startOfMonth.getMonthValue(), totalGain);
+        log.info("Brand monthly gains calculated: {}", monthlyGain); // Logging the outcome of calculating brand monthly gains
         return Collections.singletonList(monthlyGain);
     }
 
     public List<Batch> getAllBatches() {
-        return batchRepository.findAll();
+        List<Batch> batches = batchRepository.findAll();
+        log.info("All batches fetched: {}", batches); // Logging the outcome of fetching all batches
+        return batches;
     }
 
     public CustomerMonthlySummaryDto getCustomerMonthlyGains(Long customerId) {
@@ -127,9 +137,10 @@ public class AdminService {
         }
 
         List<MonthlyCustomerGainDto> monthlyCustomerGainDto = new ArrayList<>(monthlyGains.values());
-        return new CustomerMonthlySummaryDto(monthlyCustomerGainDto, totalSpent, totalGain);
+        CustomerMonthlySummaryDto summaryDto = new CustomerMonthlySummaryDto(monthlyCustomerGainDto, totalSpent, totalGain);
+        log.info("Customer monthly gains calculated for customer ID {}: {}", customerId, summaryDto); // Logging the outcome of calculating customer monthly gains
+        return summaryDto;
     }
-
 
     public List<MonthlyCustomerPurchaseDto> getCustomerMonthlyPurchases(Long customerId) {
         List<Transaction> transactions = getTransactionsByCustomerId(customerId);
@@ -154,14 +165,20 @@ public class AdminService {
             monthlyPurchases.put(monthKey, monthlyDto);
         }
 
-        return new ArrayList<>(monthlyPurchases.values());
+        List<MonthlyCustomerPurchaseDto> purchaseDtoList = new ArrayList<>(monthlyPurchases.values());
+        log.info("Customer monthly purchases calculated for customer ID {}: {}", customerId, purchaseDtoList); // Logging the outcome of calculating customer monthly purchases
+        return purchaseDtoList;
     }
 
     public List<Customer> getAllCustomers() {
-        return customerRepository.findAll();
+        List<Customer> customers = customerRepository.findAll();
+        log.info("All customers fetched: {}", customers); // Logging the outcome of fetching all customers
+        return customers;
     }
 
     public List<Transaction> getTransactionsByCustomerId(Long customerId) {
-        return transactionRepository.findByCustomerId(customerId);
+        List<Transaction> transactions = transactionRepository.findByCustomerId(customerId);
+        log.info("Fetched transactions for customer ID {}: {}", customerId, transactions); // Logging the outcome of fetching transactions by customer ID
+        return transactions;
     }
 }
